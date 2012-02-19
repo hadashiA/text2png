@@ -3,7 +3,7 @@ h2. create setting file
 <pre><code class="ruby">
 # coding: utf-8
 
-dir '~/tmp/out/'
+dir '~/out/of/dir'
 
 font 'ヒラギノ明朝 Pro W3.otf', :size => 10.pt do 
   'appearance.png'        << "おれたちの闘争本能に火が点いた！"
