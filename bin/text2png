@@ -1,78 +1,68 @@
 #!/usr/bin/env ruby
 # coding: utf-8
-
 class DSL
   module Converter
     module_function
 
-    def text_to_image(text, file, options={})
-      font_dir  = File.expand_path('~/Library/Fonts/')
-      font_path = File.join(font_dir, (options[:font] || 'MisakiGothic_Outline.ttf'))
-      size  = options[:size] || 12
-      color = options[:color] || '#fefffe'
+    def dir=(dir)
+      @@dir = dir
+    end
 
-      ui_dir = File.join(File.dirname(__FILE__), 'ui')
-      %w(default hd).each do |subdir|
-        path = File.join(ui_dir, subdir, file)
-        cmd = 'convert ' << {
-          :type       => 'TrueColorMatte',
-          :colorspace => 'RGB',
-          :background => 'none',
-          :fill       => color,
-          :font       => font_path,
-          :pointsize  => size,
-        }.map{|key, val|
-          "-#{key} '#{val}'"
-        }.join(' ') <<
-          " label:'#{text}' #{path}"
+    def prepare(font, options={})
+      user_font_dir = File.expand_path('~/Library/Fonts')
+      system_font_dir = '/Library/Fonts'
 
-        `#{cmd}`
+      @@font = File.join(system_font_dir, font)
+      unless File.exists?(@@font)
+        @@font = File.join(user_font_dir, font)
       end
+
+      @@color   = options[:color] || options[:fill] || '#fefffe'
+      @@size    = options[:size] || options[:pointsize] || 12
+      @@bgcolor = options[:bgcolor] || options[:background] || 'none'
+    end
+
+    def text_to_image(text, file)
+      path = File.join(@@dir, file)
+
+      cmd = 'convert ' + {
+        :type       => 'TrueColorMatte',
+        :colorspace => 'RGB',
+        :background => @@bgcolor,
+        :fill       => @@color,
+        :font       => @@font,
+        :pointsize  => @@size,
+      }.map{|key, val|
+          "-#{key} '#{val}'"
+      }.join(' ') +
+          " label:'#{text}' #{path}"
+      
+      puts cmd
+      `#{cmd}`
     end
   end
 
-  class GameText
+  def dir(dir)
+    Converter.dir = dir
   end
 
-  class MessageText < GameText
-    def get_point!(key, text, options={})
-      puts "message: get point #{key} => '#{text}'"
-
-      Converter.text_to_image(text, "message_get_point_#{key}.png", {
-        :font => 'MisakiGothic_Outline.ttf',
-        :size => 10
-        }.merge(options))
-    end
-  end
-
-  class LabelText < GameText
-    def at(key, text, options={})
-      puts "label at #{key} => '#{text}'"
-
-      Converter.text_to_image(text, "label_#{key}.png", {
-        :font => 'MisakiGothic_Outline.ttf',
-        :size => 12
-        }.merge(options))
-    end
-  end
-
-  class EffectText
-    def on(key, text, options={})
-      puts "effect on #{key} => '#{text}'"
-
-      Converter.text_to_image(text, "effect_#{key}.png", {
-        :font => 'mondeKT.otf',
-        :size => 40
-        }.merge(options))
-    end
-  end
-
-  [:message, :label, :effect].each do |text_type|
-    define_method(text_type) do |&block|
-      DSL.const_get(text_type.to_s.capitalize << "Text").new.instance_eval(&block)
-    end
+  def font(fontname, options={}, &block)
+    Converter.prepare(fontname, options)
+    block.call
   end
 end
 
-source = File.read(File.join(File.dirname(__FILE__), 'labels.rb'))
+class Integer
+  def pt
+    to_s
+  end
+end
+
+class String
+  def <<(text)
+    DSL::Converter.text_to_image(text, self)
+  end
+end
+
+source = File.read(File.join(File.dirname(__FILE__), ARGV.last))
 DSL.new.instance_eval(source)
