@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+# coding: utf-8
+
+class DSL
+  module Converter
+    module_function
+
+    def text_to_image(text, file, options={})
+      font_dir  = File.expand_path('~/Library/Fonts/')
+      font_path = File.join(font_dir, (options[:font] || 'MisakiGothic_Outline.ttf'))
+      size  = options[:size] || 12
+      color = options[:color] || '#fefffe'
+
+      ui_dir = File.join(File.dirname(__FILE__), 'ui')
+      %w(default hd).each do |subdir|
+        path = File.join(ui_dir, subdir, file)
+        cmd = 'convert ' << {
+          :type       => 'TrueColorMatte',
+          :colorspace => 'RGB',
+          :background => 'none',
+          :fill       => color,
+          :font       => font_path,
+          :pointsize  => size,
+        }.map{|key, val|
+          "-#{key} '#{val}'"
+        }.join(' ') <<
+          " label:'#{text}' #{path}"
+
+        `#{cmd}`
+      end
+    end
+  end
+
+  class GameText
+  end
+
+  class MessageText < GameText
+    def get_point!(key, text, options={})
+      puts "message: get point #{key} => '#{text}'"
+
+      Converter.text_to_image(text, "message_get_point_#{key}.png", {
+        :font => 'MisakiGothic_Outline.ttf',
+        :size => 10
+        }.merge(options))
+    end
+  end
+
+  class LabelText < GameText
+    def at(key, text, options={})
+      puts "label at #{key} => '#{text}'"
+
+      Converter.text_to_image(text, "label_#{key}.png", {
+        :font => 'MisakiGothic_Outline.ttf',
+        :size => 12
+        }.merge(options))
+    end
+  end
+
+  class EffectText
+    def on(key, text, options={})
+      puts "effect on #{key} => '#{text}'"
+
+      Converter.text_to_image(text, "effect_#{key}.png", {
+        :font => 'mondeKT.otf',
+        :size => 40
+        }.merge(options))
+    end
+  end
+
+  [:message, :label, :effect].each do |text_type|
+    define_method(text_type) do |&block|
+      DSL.const_get(text_type.to_s.capitalize << "Text").new.instance_eval(&block)
+    end
+  end
+end
+
+source = File.read(File.join(File.dirname(__FILE__), 'labels.rb'))
+DSL.new.instance_eval(source)
