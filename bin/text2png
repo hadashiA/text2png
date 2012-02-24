@@ -20,19 +20,26 @@ class DSL
       @@color   = options[:color] || options[:fill] || '#fefffe'
       @@size    = options[:size] || options[:pointsize] || 12
       @@bgcolor = options[:bgcolor] || options[:background] || 'none'
+      @@letter_spacing = options[:letter_spacing] || options[:interword_spacing]
+      @@line_spacing = options[:line_spacing] || options[:interline_spacing]
     end
 
     def text_to_image(text, file)
       path = File.join(@@dir, file)
 
-      cmd = 'convert ' + {
+      options = {
         :type       => 'TrueColorMatte',
         :colorspace => 'RGB',
         :background => @@bgcolor,
         :fill       => @@color,
         :font       => @@font,
         :pointsize  => @@size,
-      }.map{|key, val|
+      }
+
+      options.merge!('interword-spacing' => @@letter_spacing) if @@letter_spacing
+      options.merge!('interline-spacing' => @@line_spacing) if @@line_spacing
+
+      cmd = 'convert ' + options.map{|key, val|
           "-#{key} '#{val}'"
       }.join(' ') +
           " label:'#{text}' #{path}"
@@ -64,5 +71,5 @@ class String
   end
 end
 
-source = File.read(File.join(File.dirname(__FILE__), ARGV.last))
+source = File.read(ARGV.last)
 DSL.new.instance_eval(source)
