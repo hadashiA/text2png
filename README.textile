@@ -29,3 +29,28 @@ h2. execute
 <pre>
 ./bin/text2png settings.rb
 </pre>
+
+
+h2. more examples
+
+<pre><code class="ruby">
+# coding: utf-8
+
+dir '~/dev/iPhone/OshiriPPK/Assets/effect/'
+
+2.times do |i|
+  subdir = (i == 0 ? 'default' : 'hd')
+
+  font 'mondeKT.otf', :size => (i == 0 ? 20 : 40).pt, :letter_spacing => 0 do 
+    "#{subdir}/kotoba_yamero-.png"        << 'ヤメロー'
+    "#{subdir}/kotoba_chamero-.png"       << 'チャメロー'
+    "#{subdir}/kotoba_its-ok.png"         << "イッツオーケー"
+    "#{subdir}/kotoba_ikuze-.png"  	  << 'イクゼー'
+    "#{subdir}/kotoba_maybe.png"  	  << 'メイビー'
+    "#{subdir}/kotoba_uh-i.png"  	  << 'ウーイッ'
+    "#{subdir}/kotoba_uh-i.png"  	  << 'オンマイマインド'
+    "#{subdir}/kotoba_whats-going-on.png" << "ホワッツゴーインオン"
+    "#{subdir}/kotoba_whats.png"  	  << "ホワッツ"
+  end
+end
+</code></pre>
